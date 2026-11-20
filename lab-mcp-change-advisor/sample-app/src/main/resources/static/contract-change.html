@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>계약 변경 시뮬레이션 | 생활안심 보험</title>
+<link rel="stylesheet" href="/sample.css">
+<script src="/operations.js" defer></script>
+<main>
+  <a href="/">생활안심 보험</a>
+  <h1>계약 변경 시뮬레이션</h1>
+  <form id="contract-change-form">
+    <label>계약 번호 <input name="contractId" type="number" min="1" value="1001" required></label>
+    <label>변경할 보장
+      <select name="coverage">
+        <option value="STANDARD">기본 보장</option>
+        <option value="EXTENDED" selected>확장 보장</option>
+      </select>
+    </label>
+    <button>예상 보험료 보기</button>
+  </form>
+  <p class="hint">유지 계약 1001로 변경 후 예상 보험료와 적용일을 확인할 수 있습니다.</p>
+  <p id="result" aria-live="polite"></p>
+</main>
+</html>

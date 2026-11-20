@@ -118,3 +118,15 @@ code { overflow-wrap: anywhere; }
   main { margin-top: 1.4rem; }
   .split { grid-template-columns: minmax(0, 1fr); }
 }
+
+.attachments { display: grid; gap: .7rem; padding-left: 1.2rem; }
+.attachments li { overflow-wrap: anywhere; }
+.attachments img {
+  display: block;
+  margin-top: .35rem;
+  max-width: min(100%, 22rem);
+  max-height: 15rem;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: .35rem;
+}

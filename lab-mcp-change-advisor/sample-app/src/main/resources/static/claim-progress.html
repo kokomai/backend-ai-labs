@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보상 진행 조회 | 생활안심 보험</title>
+<link rel="stylesheet" href="/sample.css">
+<script src="/operations.js" defer></script>
+<main>
+  <a href="/">생활안심 보험</a>
+  <h1>보상 진행 조회</h1>
+  <form id="claim-progress-form">
+    <label>접수 번호 <input name="id" value="CLM-1001" maxlength="30" required></label>
+    <button>진행 상태 조회</button>
+  </form>
+  <p class="hint">CLM-1001은 서류 검토 중, CLM-1002는 처리 완료된 샘플입니다.</p>
+  <p id="result" aria-live="polite"></p>
+</main>
+</html>

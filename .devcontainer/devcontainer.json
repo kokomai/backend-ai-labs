@@ -12,7 +12,8 @@
     }
   },
   "containerEnv": {
-    "JAVA_HOME": "/usr/local/sdkman/candidates/java/current"
+    "JAVA_HOME": "/usr/local/sdkman/candidates/java/current",
+    "CHANGE_ADVISOR_BIND_ADDRESS": "0.0.0.0"
   },
   "postCreateCommand": "npm install -g @openai/codex @modelcontextprotocol/inspector",
   "customizations": {
@@ -31,6 +32,16 @@
     }
   },
   "forwardPorts": [
-    8080
-  ]
+    8080,
+    8092,
+    9090
+  ],
+  "portsAttributes": {
+    "8092": {
+      "label": "Insurance sample"
+    },
+    "9090": {
+      "label": "Change advisor"
+    }
+  }
 }

@@ -1,0 +1,54 @@
+name: Change advisor build
+
+on:
+  push:
+    paths:
+      - 'lab-mcp-change-advisor/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradle/**'
+      - '.github/workflows/change-advisor-build.yml'
+  pull_request:
+    paths:
+      - 'lab-mcp-change-advisor/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradlew'
+      - 'gradle/**'
+      - '.github/workflows/change-advisor-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Build Spring Boot applications and SBOMs
+        run: ./gradlew :lab-mcp-change-advisor:build :lab-mcp-change-advisor:sample-app:build
+      - name: Archive advisor JAR and SBOM
+        uses: actions/upload-artifact@v7
+        with:
+          name: change-advisor
+          path: |
+            lab-mcp-change-advisor/build/libs/lab-mcp-change-advisor.jar
+            lab-mcp-change-advisor/build/reports/cyclonedx-direct/bom.*
+          if-no-files-found: error
+      - name: Archive insurance sample JAR and SBOM
+        uses: actions/upload-artifact@v7
+        with:
+          name: change-advisor-insurance-sample
+          path: |
+            lab-mcp-change-advisor/sample-app/build/libs/sample-app.jar
+            lab-mcp-change-advisor/sample-app/build/reports/cyclonedx-direct/bom.*
+          if-no-files-found: error

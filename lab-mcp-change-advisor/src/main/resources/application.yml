@@ -1,12 +1,16 @@
 server:
-  address: 127.0.0.1
-  port: 8091
+  address: ${CHANGE_ADVISOR_BIND_ADDRESS:127.0.0.1}
+  port: 9090
 spring:
   application:
     name: change-advisor
   datasource:
     url: ${ADVISOR_DB_URL:jdbc:h2:file:./data/change-advisor}
     username: sa
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 16MB
   mvc:
     problemdetails:
       enabled: true
@@ -23,6 +27,9 @@ spring:
         speech: none
         transcription: none
     mcp:
+      server:
+        name: change-advisor
+        protocol: STREAMABLE
       client:
         initialized: false
         request-timeout: 8s
@@ -30,5 +37,12 @@ spring:
           enabled: false
         streamable-http:
           connections:
-            sample:
-              url: ${SAMPLE_MCP_URL:http://127.0.0.1:8092}
+            advisor:
+              url: http://127.0.0.1:${server.port}
+
+advisor:
+  mcp:
+    token: "${ADVISOR_MCP_TOKEN:}"
+  accounts:
+    biz-password: "${ADVISOR_BIZ_PASSWORD:1234}"
+    dev-password: "${ADVISOR_DEV_PASSWORD:1234}"

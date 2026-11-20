@@ -24,6 +24,14 @@ class InsuranceService {
     return contract;
   }
 
+  Contract findActiveContract(long id) {
+    var contract = findContract(id);
+    if (!contract.status().equals("유지")) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "유지 중인 계약만 처리할 수 있습니다.");
+    }
+    return contract;
+  }
+
   Quote calculateQuote(int age, boolean bundled) {
     if (age < 18 || age > 80) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가입 가능 연령은 만 18~80세입니다.");

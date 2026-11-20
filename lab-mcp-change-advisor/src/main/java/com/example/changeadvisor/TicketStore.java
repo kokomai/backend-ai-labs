@@ -12,6 +12,7 @@ import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitializat
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -20,10 +21,12 @@ import tools.jackson.databind.json.JsonMapper;
 class TicketStore {
   private final JdbcClient jdbc;
   private final JsonMapper json;
+  private final TicketAttachments attachments;
 
-  TicketStore(JdbcClient jdbc, JsonMapper json) {
+  TicketStore(JdbcClient jdbc, JsonMapper json, TicketAttachments attachments) {
     this.jdbc = jdbc;
     this.json = json;
+    this.attachments = attachments;
   }
 
   @PostConstruct
@@ -32,15 +35,18 @@ class TicketStore {
         .update();
   }
 
-  ChangeTicket create(String screenPath, String title, String request) {
+  @Transactional
+  public ChangeTicket create(
+      String owner, String screenPath, String title, String request, List<TicketAttachment> files) {
     var id = UUID.randomUUID();
     jdbc.sql(
             """
-        insert into change_ticket (id, created_at, screen_path, title, request_text)
-        values (?, ?, ?, ?, ?)
+        insert into change_ticket (id, created_at, owner, screen_path, title, request_text)
+        values (?, ?, ?, ?, ?, ?)
         """)
-        .params(id, OffsetDateTime.now(ZoneOffset.UTC), screenPath, title, request)
+        .params(id, OffsetDateTime.now(ZoneOffset.UTC), owner, screenPath, title, request)
         .update();
+    attachments.insert(id, files);
     return get(id);
   }
 
@@ -62,12 +68,43 @@ class TicketStore {
         .list();
   }
 
-  ChangeTicket get(UUID id) {
-    return jdbc.sql("select * from change_ticket where id = ?")
-        .param(id)
+  List<ChangeTicket.BusinessView> listOwned(String owner) {
+    return jdbc
+        .sql("select * from change_ticket where owner = ? order by created_at desc")
+        .param(owner)
         .query(this::read)
+        .list()
+        .stream()
+        .map(ticket -> ticket.withAttachments(attachments.list(ticket.id())).businessView())
+        .toList();
+  }
+
+  ChangeTicket.BusinessView getOwned(UUID id, String owner) {
+    var ticket =
+        jdbc.sql("select * from change_ticket where id = ? and owner = ?")
+            .params(id, owner)
+            .query(this::read)
+            .optional()
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "문의를 찾을 수 없습니다."));
+    return ticket.withAttachments(attachments.list(id)).businessView();
+  }
+
+  void checkOwner(UUID id, String owner) {
+    jdbc.sql("select id from change_ticket where id = ? and owner = ?")
+        .params(id, owner)
+        .query(UUID.class)
         .optional()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "문의를 찾을 수 없습니다."));
+  }
+
+  ChangeTicket get(UUID id) {
+    var ticket =
+        jdbc.sql("select * from change_ticket where id = ?")
+            .param(id)
+            .query(this::read)
+            .optional()
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "문의를 찾을 수 없습니다."));
+    return ticket.withAttachments(attachments.list(id));
   }
 
   ChangeTicket claim(UUID id, String assignee) {
@@ -144,6 +181,7 @@ class TicketStore {
         row.getString("assignee"),
         row.getString("reply"),
         ChangeTicket.AnalysisState.valueOf(row.getString("analysis_state")),
-        data == null ? null : json.readValue(data, ChangeTicket.Analysis.class));
+        data == null ? null : json.readValue(data, ChangeTicket.Analysis.class),
+        List.of());
   }
 }

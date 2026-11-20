@@ -1,11 +1,9 @@
 server:
-  address: 127.0.0.1
+  address: ${CHANGE_ADVISOR_BIND_ADDRESS:127.0.0.1}
   port: 8092
 spring:
   application:
     name: change-advisor-sample
-  ai:
-    mcp:
-      server:
-        name: insurance-sample
-        protocol: STREAMABLE
+  mvc:
+    problemdetails:
+      enabled: true

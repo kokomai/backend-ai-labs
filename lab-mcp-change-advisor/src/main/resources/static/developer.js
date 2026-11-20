@@ -1,4 +1,4 @@
-import {analysisStates, formatTime, node, request, screenNames, showStatus, states} from './common.js';
+import {analysisStates, formatTime, loadScreens, node, renderAttachments, request, screenName, showStatus, states} from './common.js';
 
 const list = document.querySelector('#developer-tickets');
 const detail = document.querySelector('#ticket-detail');
@@ -61,10 +61,13 @@ async function refreshDetail() {
     detail.replaceChildren(
       node('h2', ticket.title),
       node('span', states[ticket.state], 'badge'),
-      node('p', screenNames[ticket.screenPath] + ' · ' + formatTime(ticket.createdAt), 'meta'),
+      node('p', screenName(ticket.screenPath) + ' · ' + formatTime(ticket.createdAt), 'meta'),
       node('p', ticket.request, 'prose')
     );
     if (ticket.assignee) detail.append(node('p', '담당자 ' + ticket.assignee, 'meta'));
+    if (ticket.attachments?.length) {
+      detail.append(renderAttachments(ticket.attachments, api + '/' + ticket.id));
+    }
     if (ticket.reply) {
       const reply = node('div', null, 'section');
       reply.append(node('h3', '현업에 보낸 답변'), node('p', ticket.reply, 'prose'));
@@ -117,22 +120,29 @@ function renderAnalysis(ticket) {
 function renderAction(ticket) {
   action.replaceChildren();
   if (ticket.state === 'RESOLVED') return;
-  const claim = ticket.state === 'OPEN';
-  const name = claim ? 'assignee' : 'reply';
-  const field = node(claim ? 'input' : 'textarea');
-  field.name = name;
-  field.maxLength = claim ? 60 : 3000;
-  field.required = true;
-  if (!claim) field.rows = 4;
-  const label = node('label', claim ? '담당자 이름' : '현업에 보낼 답변');
-  label.append(field);
-  const button = node('button', claim ? '문의 맡기' : '답변 등록', 'primary');
   const form = node('form', null, 'section');
-  form.append(label, button);
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    submit(ticket.id, claim ? 'claim' : 'reply', Object.fromEntries(new FormData(form)), button);
-  });
+  if (ticket.state === 'OPEN') {
+    const button = node('button', '문의 맡기', 'primary');
+    form.append(button);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submit(ticket.id, 'claim', {}, button);
+    });
+  } else {
+    const field = node('textarea');
+    field.name = 'reply';
+    field.maxLength = 3000;
+    field.required = true;
+    field.rows = 4;
+    const label = node('label', '현업에 보낼 답변');
+    label.append(field);
+    const button = node('button', '답변 등록', 'primary');
+    form.append(label, button);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submit(ticket.id, 'reply', Object.fromEntries(new FormData(form)), button);
+    });
+  }
   action.append(form);
 }
 
@@ -151,6 +161,7 @@ async function submit(id, endpoint, body, button) {
 
 async function refresh() {
   try {
+    await loadScreens();
     await Promise.all([refreshList(), refreshDetail()]);
   } catch (error) {
     showStatus(message, error.message, true);

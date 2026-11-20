@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사고 접수 | 생활안심 보험</title>
+<link rel="stylesheet" href="/sample.css">
+<script src="/operations.js" defer></script>
+<main>
+  <a href="/">생활안심 보험</a>
+  <h1>사고 접수</h1>
+  <form id="claim-intake-form">
+    <label>계약 번호 <input name="contractId" type="number" min="1" value="1001" required></label>
+    <label>사고일 <input name="accidentDate" type="date" required aria-describedby="date-hint"></label>
+    <p id="date-hint" class="hint">사고일은 오늘부터 30일 전까지 입력할 수 있습니다.</p>
+    <label>사고 내용
+      <textarea name="description" rows="4" minlength="10" maxlength="250" required
+        placeholder="예: 샘플 휴대품이 이동 중 파손됐습니다."></textarea>
+    </label>
+    <button>사고 접수</button>
+  </form>
+  <p id="result" aria-live="polite"></p>
+  <a id="progress-link" hidden>방금 접수한 사고의 진행 조회</a>
+</main>
+</html>

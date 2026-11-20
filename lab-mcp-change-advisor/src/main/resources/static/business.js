@@ -1,20 +1,23 @@
-import {formatTime, node, request, screenNames, showStatus, states} from './common.js';
+import {formatTime, loadScreens, node, renderAttachments, request, screenName, showStatus, states} from './common.js';
 
 const form = document.querySelector('#create-ticket');
 const message = document.querySelector('#form-message');
 const list = document.querySelector('#business-tickets');
 const screen = document.querySelector('#screen');
 const sampleLink = document.querySelector('#sample-link');
-const sampleHome = sampleLink.href;
-const storageKey = 'change-advisor-tickets';
+const sampleHome = new URL(sampleLink.href);
+const codespaceHost = location.hostname.match(/^(.+)-[0-9]+(\.app\.github\.dev)$/);
+if (codespaceHost) {
+  sampleHome.protocol = 'https:';
+  sampleHome.hostname = codespaceHost[1] + '-' + sampleHome.port + codespaceHost[2];
+  sampleHome.port = '';
+}
 const suppliedId = new URLSearchParams(location.search).get('ticket');
-const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
-const stored = JSON.parse(localStorage.getItem(storageKey) || '[]');
-const ids = new Set([suppliedId, ...stored].filter((id) => uuid.test(id || '')));
 let lastRender = '';
 let revision = 0;
 
 screen.addEventListener('change', updateSampleLink);
+updateSampleLink();
 
 function updateSampleLink() {
   sampleLink.href = new URL(screen.value || '/', sampleHome).href;
@@ -22,22 +25,32 @@ function updateSampleLink() {
 
 async function refresh() {
   const current = ++revision;
-  const results = await Promise.allSettled(
-    [...ids].map((id) => request('/api/business/tickets/' + id))
-  );
-  if (current !== revision) return;
-  const tickets = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
-  if (tickets.some((ticket) => ticket.id === suppliedId)) {
-    localStorage.setItem(storageKey, JSON.stringify([...new Set([suppliedId, ...stored])]));
+  try {
+    const [tickets, availableScreens] = await Promise.all([
+      request('/api/business/tickets'),
+      loadScreens()
+    ]);
+    if (screen.options.length === 1) {
+      screen.append(...availableScreens.map(({path, name}) => {
+        const option = node('option', name);
+        option.value = path;
+        return option;
+      }));
+    }
+    if (current !== revision) return;
+    const snapshot = JSON.stringify(tickets);
+    if (snapshot === lastRender) return;
+    lastRender = snapshot;
+    const linked = tickets.find((ticket) => ticket.id === suppliedId);
+    const ordered = linked ? [linked, ...tickets.filter((ticket) => ticket !== linked)] : tickets;
+    const cards = ordered.map(renderTicket);
+    list.replaceChildren(...(cards.length ? cards : [node('p', '아직 접수된 문의가 없습니다.', 'hint')]));
+  } catch (error) {
+    if (current === revision) {
+      lastRender = '';
+      list.replaceChildren(node('p', error.message, 'error'));
+    }
   }
-  const failed = tickets.length !== results.length;
-  const snapshot = JSON.stringify([tickets, failed]);
-  if (snapshot === lastRender) return;
-  lastRender = snapshot;
-  const cards = tickets.map(renderTicket);
-  if (!cards.length && !failed) cards.push(node('p', '아직 접수된 문의가 없습니다.', 'hint'));
-  if (failed) cards.push(node('p', '일부 문의를 조회할 수 없습니다.', 'error'));
-  list.replaceChildren(...cards);
 }
 
 function renderTicket(ticket) {
@@ -47,10 +60,13 @@ function renderTicket(ticket) {
   article.append(
     node('span', states[ticket.state], 'badge'),
     node('h3', ticket.title),
-    node('p', screenNames[ticket.screenPath] + ' · ' + formatTime(ticket.createdAt), 'meta'),
+    node('p', screenName(ticket.screenPath) + ' · ' + formatTime(ticket.createdAt), 'meta'),
     node('p', ticket.request, 'prose'),
     link
   );
+  if (ticket.attachments?.length) {
+    article.append(renderAttachments(ticket.attachments, '/api/business/tickets/' + ticket.id));
+  }
   if (ticket.reply) {
     const reply = node('div', null, 'section');
     reply.append(node('h3', '개발자 답변'), node('p', ticket.reply, 'prose'));
@@ -65,12 +81,14 @@ form.addEventListener('submit', async (event) => {
   button.disabled = true;
   showStatus(message, '접수 중…');
   try {
-    const ticket = await request('/api/business/tickets', Object.fromEntries(new FormData(form)));
-    const known = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    const updated = [...new Set([ticket.id, ...known])];
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-    stored.splice(0, stored.length, ...updated);
-    ids.add(ticket.id);
+    const payload = new FormData(form);
+    const files = payload.getAll('attachments').filter((file) => file.name);
+    if (files.length > 3 || files.some((file) => file.size === 0 || file.size > 5 * 1024 * 1024)) {
+      throw new Error('비어 있지 않은 5MB 이하 파일을 최대 3개 첨부할 수 있습니다.');
+    }
+    payload.delete('attachments');
+    for (const file of files) payload.append('attachments', file);
+    await request('/api/business/tickets', payload);
     form.reset();
     updateSampleLink();
     showStatus(message, '문의를 접수했습니다.');

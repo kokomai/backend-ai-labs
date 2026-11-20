@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version '4.1.2'
+    id 'org.cyclonedx.bom' version '3.6.1'
 }
 
 java {
@@ -18,7 +19,43 @@ dependencies {
     implementation platform('org.springframework.ai:spring-ai-bom:2.0.2')
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
     implementation 'org.springframework.ai:spring-ai-starter-mcp-client'
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     runtimeOnly 'com.h2database:h2'
+}
+
+tasks.named('processResources') {
+    from('sample-app/src/main') {
+        include 'java/com/example/advisorsample/*Controller.java'
+        include 'java/com/example/advisorsample/*Service.java'
+        include 'java/com/example/advisorsample/*Policy.java'
+        include 'java/com/example/advisorsample/*Repository.java'
+        include 'resources/static/*.html'
+        include 'resources/static/*.js'
+        into 'sample-source'
+    }
+}
+
+allprojects {
+    tasks.named('cyclonedxDirectBom') {
+        includeConfigs = ['runtimeClasspath']
+        projectType = org.cyclonedx.model.Component.Type.APPLICATION
+        failOnUnresolvedDependencies = true
+    }
+
+    plugins.withId('org.springframework.boot') {
+        // Put the launcher tools on the resolved runtime graph so the SBOM inventories them.
+        dependencies.add('runtimeOnly', 'org.springframework.boot:spring-boot-jarmode-tools')
+        tasks.named('bootJar') {
+            includeTools = false
+        }
+    }
+
+    plugins.withId('java') {
+        tasks.named('build') {
+            dependsOn tasks.named('cyclonedxDirectBom')
+        }
+    }
 }

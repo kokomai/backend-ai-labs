@@ -11,3 +11,8 @@ input[type="number"] { padding: .6rem; border: 1px solid #819eaa; border-radius:
 button { padding: .6rem 1rem; background: #076873; border: 0; color: white; border-radius: .4rem; cursor: pointer; }
 .eyebrow, .hint { color: #48646d; }
 #result { font-weight: 650; }
+select, textarea, input[type="text"], input[type="date"], input:not([type]) {
+  font: inherit; padding: .6rem; border: 1px solid #819eaa; border-radius: .3rem;
+}
+textarea { max-width: 100%; resize: vertical; }
+button:disabled { opacity: .65; cursor: wait; }

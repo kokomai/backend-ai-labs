@@ -14,7 +14,8 @@ record ChangeTicket(
     String assignee,
     String reply,
     AnalysisState analysisState,
-    Analysis analysis) {
+    Analysis analysis,
+    List<TicketAttachment.Info> attachments) {
 
   enum State {
     OPEN,
@@ -40,7 +41,8 @@ record ChangeTicket(
       String title,
       String request,
       State state,
-      String reply) {}
+      String reply,
+      List<TicketAttachment.Info> attachments) {}
 
   record Summary(
       UUID id,
@@ -50,7 +52,22 @@ record ChangeTicket(
       State state,
       AnalysisState analysisState) {}
 
+  ChangeTicket withAttachments(List<TicketAttachment.Info> files) {
+    return new ChangeTicket(
+        id,
+        createdAt,
+        screenPath,
+        title,
+        request,
+        state,
+        assignee,
+        reply,
+        analysisState,
+        analysis,
+        files);
+  }
+
   BusinessView businessView() {
-    return new BusinessView(id, createdAt, screenPath, title, request, state, reply);
+    return new BusinessView(id, createdAt, screenPath, title, request, state, reply, attachments);
   }
 }
