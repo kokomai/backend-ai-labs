@@ -12,3 +12,6 @@ project(':lab02-agent-design-review').projectDir = file('week02/lab02-agent-desi
 
 include 'lab03-insurance-operations-api'
 project(':lab03-insurance-operations-api').projectDir = file('week02/lab03-insurance-operations-api')
+
+include 'lab-mcp-change-advisor'
+include 'lab-mcp-change-advisor:sample-app'

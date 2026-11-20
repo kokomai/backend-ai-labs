@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보험료 계산 | 생활안심 보험</title>
+<link rel="stylesheet" href="/sample.css">
+<script src="/insurance.js" defer></script>
+<main>
+  <a href="/">생활안심 보험</a>
+  <h1>보험료 계산</h1>
+  <form id="quote-form">
+    <label>만 나이 <input name="age" type="number" min="18" max="80" value="40" required></label>
+    <label class="check"><input name="bundled" type="checkbox" checked> 결합 할인 적용</label>
+    <button>보험료 계산</button>
+  </form>
+  <p id="result" aria-live="polite"></p>
+</main>
+</html>

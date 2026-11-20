@@ -1,0 +1,11 @@
+spring:
+  ai:
+    model:
+      chat: openai
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: ${ADVISOR_MODEL:gpt-4.1-mini}
+    retry:
+      max-attempts: 1

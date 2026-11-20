@@ -1,0 +1,11 @@
+server:
+  address: 127.0.0.1
+  port: 8092
+spring:
+  application:
+    name: change-advisor-sample
+  ai:
+    mcp:
+      server:
+        name: insurance-sample
+        protocol: STREAMABLE

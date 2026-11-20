@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.2')
+    implementation platform('org.springframework.ai:spring-ai-bom:2.0.2')
+    implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
+}
+
+tasks.named('processResources') {
+    from('src/main') {
+        include 'java/com/example/advisorsample/InsuranceController.java'
+        include 'java/com/example/advisorsample/InsuranceService.java'
+        include 'resources/static/*.html'
+        include 'resources/static/*.js'
+        into 'sample-source'
+    }
+}

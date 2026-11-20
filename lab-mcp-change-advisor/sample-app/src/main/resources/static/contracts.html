@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>계약 조회 | 생활안심 보험</title>
+<link rel="stylesheet" href="/sample.css">
+<script src="/insurance.js" defer></script>
+<main>
+  <a href="/">생활안심 보험</a>
+  <h1>계약 조회</h1>
+  <form id="contract-form">
+    <label>계약 번호 <input name="id" type="number" min="1" value="1001" required></label>
+    <button>조회하기</button>
+  </form>
+  <p class="hint">샘플 계약 번호는 1001과 1002입니다.</p>
+  <p id="result" aria-live="polite"></p>
+</main>
+</html>
